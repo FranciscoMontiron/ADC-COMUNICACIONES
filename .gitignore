@@ -1,0 +1,6 @@
+# ignorar archivos y carpetas que no quiero subir al repo
+__pycache__/
+venv/
+*.pyc
+.DS_Store
+.env
