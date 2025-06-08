@@ -1,6 +1,48 @@
-# ignorar archivos y carpetas que no quiero subir al repo
-__pycache__/
+# Ignorar archivos y carpetas que no quiero subir al repo
+
+# Entornos virtuales
 venv/
-*.pyc
-.DS_Store
+env/
+.venv/
+.env/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Variables de entorno
 .env
+.env.local
+.env.production
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
