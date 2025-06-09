@@ -27,6 +27,8 @@ st.markdown("""
         border: 1px solid #e9ecef;
     }
     .warning-box {
+        color:black;
+        font-weight: bold;
         padding: 1rem;
         border-radius: 0.5rem;
         background-color: #fff3cd;
