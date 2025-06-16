@@ -46,3 +46,4 @@ logs/
 # Jupyter Notebooks
 .ipynb_checkpoints/
 *.ipynb
+*.db
