@@ -16,7 +16,7 @@ def generar_señal(tipo: str, freq: float, amp: float, t: np.ndarray, n_armonico
         for i, a in enumerate(amplitudes_armonicos):
             senal += a * np.sin(2*np.pi*freq*(i+1)*t)
         return amp * senal
-    elif tipo == "Senal con ruido":
+    elif tipo == "Señal con ruido":
         senal = amp * np.sin(2*np.pi*freq*t)
         power_senal = np.mean(senal**2)
         power_ruido = power_senal / (10**(snr_db / 10))
@@ -26,7 +26,7 @@ def generar_señal(tipo: str, freq: float, amp: float, t: np.ndarray, n_armonico
         senal = (1 + indice_mod * np.sin(2*np.pi*freq*t)) * np.cos(2*np.pi*f_portadora*t)
         return amp * senal
     else:
-        raise ValueError("Tipo de senal no soportado")
+        raise ValueError("Tipo de señal no soportado")
 
 def muestrear(senal: np.ndarray, t: np.ndarray, fs: float):
     """Toma muestras de la señal a frecuencia fs."""

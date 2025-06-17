@@ -2,7 +2,9 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objs as go
 from adc_signal import generar_señal, muestrear, cuantizar, filtro_antialias
+from database import guardar_senal, inicializarBaseDeDatos, obtener_senal
 
+inicializarBaseDeDatos()
 # configuro la pagina y meto un poco de css para que quede mas fachero
 st.set_page_config(
     page_title="Simulador ADC",
@@ -44,41 +46,47 @@ st.markdown("---")
 # sidebar para los parametros
 st.sidebar.header("⚙️ Configuracion de Senal")
 
-# parametros de la senal analogica
+# parametros de la señal analogica
 st.sidebar.subheader("Senal de Entrada")
 tipo = st.sidebar.selectbox(
-    "Tipo de senal", 
-    ["Senoidal", "Cuadrada", "Diente de sierra", "Triangular", "Suma de armonicos", "Senal con ruido", "AM (Modulada en amplitud)"],
+    "Tipo de señal", 
+    ["Senoidal", "Cuadrada", "Diente de sierra", "Triangular", "Suma de armonicos", "Señal con ruido", "AM (Modulada en amplitud)"],
     help="Tipo de onda analogica a simular. Senoidal: la clasica, Cuadrada: dos niveles, Diente de sierra: sube y baja lineal."
 )
 
 f0 = st.sidebar.slider(
     "Frecuencia fundamental (Hz)", 
     min_value=1.0, max_value=1000.0, value=50.0, step=1.0,
-    help="Frecuencia de la senal original en Hz. Si es muy alta respecto al muestreo, aparece aliasing."
+    help="Frecuencia de la señal original en Hz. Si es muy alta respecto al muestreo, aparece aliasing."
 )
 amp = st.sidebar.slider(
     "Amplitud", 
     min_value=0.1, max_value=5.0, value=1.0, step=0.1,
-    help="Valor maximo de la senal analogica. Afecta el rango de cuantizacion."
+    help="Valor maximo de la señal analogica. Afecta el rango de cuantizacion."
 )
 
-# parametros extra segun el tipo de senal
+n_armonicos = 0
+amplitudes_armonicos = []
+snr_db = 0
+f_portadora = 0
+indice_mod = 0
+orden_filtro = 0
+fc_factor = 0
+# parametros extra segun el tipo de señal
 if tipo == "Suma de armonicos":
     n_armonicos = st.sidebar.slider("Numero de armonicos", min_value=2, max_value=10, value=3)
-    amplitudes_armonicos = []
     for i in range(n_armonicos):
         amp_harm = st.sidebar.slider(
             f"Amplitud armonico {i+1}", 
             min_value=0.0, max_value=1.0, value=1.0/(i+1), step=0.1,
-            help="Amplitud del armonico. Cambia la forma de la senal compuesta."
+            help="Amplitud del armonico. Cambia la forma de la señal compuesta."
         )
         amplitudes_armonicos.append(amp_harm)
-elif tipo == "Senal con ruido":
+elif tipo == "Señal con ruido":
     snr_db = st.sidebar.slider(
         "SNR (dB)", 
         min_value=0, max_value=50, value=20,
-        help="Relacion senal-ruido en dB. Mas alto = menos ruido."
+        help="Relacion señal-ruido en dB. Mas alto = menos ruido."
     )
 elif tipo == "AM (Modulada en amplitud)":
     f_portadora = st.sidebar.slider(
@@ -119,7 +127,7 @@ mostrar_alias = st.sidebar.checkbox(
 aplicar_filtro = st.sidebar.checkbox(
     "Aplicar filtro anti-alias", 
     value=False,
-    help="Si se activa, se filtra la senal antes de muestrear para evitar aliasing."
+    help="Si se activa, se filtra la señal antes de muestrear para evitar aliasing."
 )
 
 if aplicar_filtro:
@@ -134,16 +142,16 @@ if aplicar_filtro:
         help="Frecuencia de corte del filtro como un factor de fs/2. Menor que 1."
     )
 
-# armo los parametros extra para la funcion de senal
+# armo los parametros extra para la funcion de señal
 kwargs = {}
 if tipo == "Suma de armonicos":
     kwargs = {"n_armonicos": n_armonicos, "amplitudes_armonicos": amplitudes_armonicos}
-elif tipo == "Senal con ruido":
+elif tipo == "Señal con ruido":
     kwargs = {"snr_db": snr_db}
 elif tipo == "AM (Modulada en amplitud)":
     kwargs = {"f_portadora": f_portadora, "indice_mod": indice_mod}
 
-# genero la senal analogica con mucha resolucion (como si fuera continua)
+# genero la señal analogica con mucha resolucion (como si fuera continua)
 dur = 0.1  # segundos
 t_analog = np.linspace(0, dur, 20000)
 s_analog = generar_señal(tipo, f0, amp, t_analog, **kwargs)
@@ -160,7 +168,7 @@ else:
 # hago el muestreo
 t_sample, s_sample = muestrear(s_analog_filtrada, t_analog, fs)
 
-# cuantizo la senal muestreada
+# cuantizo la señal muestreada
 s_quant = cuantizar(s_sample, bits, amp)
 
 # metricas principales
@@ -179,7 +187,7 @@ with col4:
 
 st.markdown("---")
 
-# grafico la senal analogica
+# grafico la señal analogica
 fig1 = go.Figure()
 fig1.add_trace(go.Scatter(
     x=t_analog*1000, y=s_analog, 
@@ -195,14 +203,14 @@ if aplicar_filtro:
     ))
 
 fig1.update_layout(
-    title="📊 Senal Analogica", 
+    title="📊 Señal Analogica", 
     xaxis_title="Tiempo [ms]", 
     yaxis_title="Amplitud [V]",
     template="plotly_white",
     hovermode='x unified'
 )
 
-# grafico la senal digitalizada
+# grafico la señal digitalizada
 fig2 = go.Figure()
 fig2.add_trace(go.Scatter(
     x=t_sample*1000, y=s_sample, 
@@ -217,7 +225,7 @@ fig2.add_trace(go.Scatter(
 ))
 
 fig2.update_layout(
-    title="🔢 Senal Digitalizada (ADC)", 
+    title="🔢 Señal Digitalizada (ADC)", 
     xaxis_title="Tiempo [ms]", 
     yaxis_title="Amplitud [V]",
     template="plotly_white",
@@ -234,11 +242,11 @@ with col2:
 # analisis espectral
 st.markdown("### 📈 Analisis Espectral")
 
-# fft de la senal original
+# fft de la señal original
 fft_orig = np.fft.fft(s_analog)
 freq_orig = np.fft.fftfreq(len(s_analog), t_analog[1] - t_analog[0])
 
-# fft de la senal cuantizada (interpolada para comparar)
+# fft de la señal cuantizada (interpolada para comparar)
 fft_quant = np.fft.fft(np.interp(t_analog, t_sample, s_quant))
 
 fig_fft = go.Figure()
@@ -280,7 +288,7 @@ if mostrar_alias:
             '<div class="warning-box">'
             '⚠️ <strong>ALIASING DETECTADO!</strong><br>'
             f'La frecuencia de muestreo ({fs} Hz) es menor que el doble de la frecuencia fundamental ({2*f0} Hz). '
-            'Esto viola el teorema de Nyquist y va a distorsionar la senal reconstruida.'
+            'Esto viola el teorema de Nyquist y va a distorsionar la señal reconstruida.'
             '</div>', 
             unsafe_allow_html=True
         )
@@ -291,10 +299,34 @@ if mostrar_alias:
 error_cuant = np.mean((s_sample - s_quant)**2)
 st.info(f"📊 Error cuadratico medio de cuantizacion: {error_cuant:.6f}")
 
-# info extra segun el tipo de senal
+# info extra segun el tipo de señal
 if tipo == "Suma de armonicos":
-    st.info(f"🎵 Senal compuesta: {n_armonicos} armonicos con amplitudes {[f'{a:.2f}' for a in amplitudes_armonicos]}")
-elif tipo == "Senal con ruido":
-    st.info(f"🔊 Senal con ruido: SNR = {snr_db} dB")
+    st.info(f"🎵 Señal compuesta: {n_armonicos} armonicos con amplitudes {[f'{a:.2f}' for a in amplitudes_armonicos]}")
+elif tipo == "Señal con ruido":
+    st.info(f"🔊 Señal con ruido: SNR = {snr_db} dB")
 elif tipo == "AM (Modulada en amplitud)":
     st.info(f"📡 Mod AM: Portadora = {f_portadora} Hz, Indice = {indice_mod}")
+
+# funcion para guardar la señal en la base de datos
+def guardar_senal_callback():
+    if(guardar_senal(
+        tipo,
+        f0,
+        amp,
+        fs,
+        bits,
+        mostrar_alias,
+        aplicar_filtro,
+        n_armonicos,
+        amplitudes_armonicos,
+        snr_db,
+        f_portadora,
+        indice_mod,
+        orden_filtro,
+        fc_factor,
+    )):
+        st.success("Señal guardada correctamente")
+    else:
+        st.error("Error al guardar la señal")
+
+st.sidebar.button("Guardar señal", on_click=guardar_senal_callback)

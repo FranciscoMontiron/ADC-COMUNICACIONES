@@ -99,7 +99,7 @@ def main():
     test_casos_extremos()
     print("\n🎉 Tests terminados!")
     print("\n📋 Resumen de funcionalidades:")
-    print("   OK 7 tipos de senal")
+    print("   OK 7 tipos de señal")
     print("   OK Muestreo configurable")
     print("   OK Cuantizacion de 1-16 bits")
     print("   OK Filtro anti-alias avanzado")
