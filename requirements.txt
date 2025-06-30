@@ -2,4 +2,3 @@ streamlit>=1.25.0
 numpy>=1.21.0
 scipy>=1.7.0
 plotly>=5.14.0
-sqlite3>=3.36.0
