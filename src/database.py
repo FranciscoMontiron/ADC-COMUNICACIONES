@@ -126,7 +126,52 @@ def obtener_senal(id_senal):
         print("Error: No se pudo crear la conexion a la base de datos")
         return None
 
+def obtener_todas_senales():
+    """Obtiene todas las señales guardadas en la base de datos"""
+    conn = crearConexion()
+    if conn is not None:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT id, tipo, f0, fs, bits, fecha_creacion FROM senales ORDER BY fecha_creacion DESC')
+            senales = cursor.fetchall()
+            
+            # Convertir a lista de diccionarios
+            columnas = ['id', 'tipo', 'f0', 'fs', 'bits', 'fecha_creacion']
+            senales_lista = []
+            for senal in senales:
+                senal_dict = dict(zip(columnas, senal))
+                senales_lista.append(senal_dict)
+                
+            return senales_lista
+        except Error as e:
+            print(f"Error al obtener las señales: {e}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        print("Error: No se pudo crear la conexión a la base de datos")
+        return []
+
+def eliminar_senal(id_senal):
+    """Elimina una señal de la base de datos"""
+    conn = crearConexion()
+    if conn is not None:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM senales WHERE id = ?', (id_senal,))
+            conn.commit()
+            return cursor.rowcount > 0  # True si se eliminó algo
+        except Error as e:
+            print(f"Error al eliminar la señal: {e}")
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        print("Error: No se pudo crear la conexión a la base de datos")
+        return False
+
 if __name__ == '__main__':
     inicializarBaseDeDatos()
 
-    
